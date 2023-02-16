@@ -5,6 +5,27 @@ import d4rl
 
 from offlinerllib.buffer.dataset import D4RLDataset
 
+def return_reward_range(dataset, max_episode_steps):
+    returns, lengths = [], []
+    ep_ret, ep_len = 0.0, 0
+    for r, d in zip(dataset["rewards"], dataset["terminals"]):
+        ep_ret += float(r)
+        ep_len += 1
+        if d or ep_len == max_episode_steps:
+            returns.append(ep_ret)
+            lengths.append(ep_len)
+            ep_ret, ep_len = 0.0, 0
+    lengths.append(ep_len)  # but still keep track of number of steps
+    assert sum(lengths) == len(dataset["rewards"])
+    return min(returns), max(returns)
+
+def modify_reward(dataset, max_episode_steps=1000):
+    min_ret, max_ret = return_reward_range(dataset, max_episode_steps)
+    dataset["rewards"] /= max_ret - min_ret
+    dataset["rewards"] *= max_episode_steps
+    return dataset
+    
+
 def _calc_terminal(dataset):
     terminal = dataset["terminals"].copy()
     count = 0
@@ -55,7 +76,7 @@ def get_d4rl_dataset(task, normalize_reward=False, normalize_obs=False):
         if "antmaze" in task:
             dataset, _ = _antmaze_normalize_reward(dataset)
         elif "halfcheetah" in task or "hopper" in task or "walker2d" in task:
-            dataset, _ = _normalize_reward(dataset)
+            dataset = modify_reward(dataset)
     if normalize_obs:
         dataset, info = _normalize_obs(dataset)
         from gym.wrappers.transform_observation import TransformObservation

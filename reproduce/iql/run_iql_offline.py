@@ -90,7 +90,7 @@ class GaussianPolicy(nn.Module):
         dist = self(obs)
         action = dist.mean if deterministic else dist.sample()
         action = torch.clamp(self.max_action * action, -self.max_action, self.max_action)
-        return action
+        return action, {}
     
     def evaluate(self, obs, action, return_dist=False, *args, **kwargs):
         dist = self.forward(obs)
@@ -119,7 +119,7 @@ class DeterministicPolicy(nn.Module):
         return self.net(obs)
     
     def sample(self, obs, deterministic: bool=False, *args, **kwargs):
-        return self(obs)
+        return self(obs), {}
 
 
 class TwinQ(nn.Module):

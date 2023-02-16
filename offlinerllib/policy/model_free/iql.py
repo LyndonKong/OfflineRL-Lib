@@ -88,10 +88,10 @@ class IQLPolicy(BasePolicy):
             # v = self.critic_v(obss)    # theoretically we can re-use v from above, however the original implementation re-computes v with the updated critic_v, so we keep the same
             advantage = q - v
             exp_advanrage = (self._temperature * advantage).exp().clamp(max=100.0)
-        if isinstance(self.actor, DeterministicActor):
+        if self.actor.name == "deterministic":
             # use bc loss
             policy_out = torch.sum((self.actor.sample(obss)[0] - actions)**2, dim=1)
-        elif isinstance(self.actor, GaussianActor):
+        else:
             policy_out = - self.actor.evaluate(obss, actions)[0]
         actor_loss = (exp_advanrage * policy_out).mean()
 

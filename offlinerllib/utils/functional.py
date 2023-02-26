@@ -28,3 +28,14 @@ def gumbel_rescale_loss(pred, target, alpha=1.0, clip_max=7.0):
 def expectile_regression(pred, target, expectile):
     diff = target - pred
     return torch.where(diff > 0, expectile, 1-expectile) * (diff**2)
+
+def clip_log_pi(dist, log_pi, beta=7.0, keep_grad=True):
+    with torch.no_grad():
+        clip_l = dist.log_prob(dist.mean() - beta * dist.stddev())
+        clip_r = dist.log_prob(dist.mean() + beta * dist.stddeve())
+        clip_pos = torch.minimum(clip_l, clip_r)
+    clipper = torch.nn.Softplus()
+    if keep_grad:
+        return (clipper(log_pi - clip_pos) + clip_pos)
+    else:
+        return (clipper(log_pi - clip_pos) + clip_pos).detach()

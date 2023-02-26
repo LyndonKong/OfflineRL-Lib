@@ -9,7 +9,21 @@ class BasePolicy(nn.Module):
         super().__init__()
         
     def update(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            self.before_update(batch)
+            self.real_update(batch)
+            self.after_update(batch)
+        except NotImplemented as e:
+            raise e
+    
+    def before_update(self, batch: Dict[str, Any]):
+        pass
+    
+    def real_update(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
+    
+    def after_update(self, batch: Dict[str, Any]):
+        pass
     
     def select_action(self, obs: np.ndarray, *args, **kwargs):
         raise NotImplementedError
